@@ -1,0 +1,11 @@
+Add a stop remote command which will allow the bot to be turned off remotely and peacefully (save and close all files along the way).
+Choose and implement a file system which will save and store data relevant to the bot in case it crashes, goes offline, or is being relaunched.
+Create and implement reminder and event classes so they meet all the requirements and are conveniet to use.
+Finish the !remind command.
+Create the !new event command.
+Configure dynamic storage for all reminders and events.
+Create identifiers for all reminders and events which the user can use to access prior reminders or events.
+Decide how reminders associated with a certain event will be stored and implement this.
+Create commands to modify or delete existing reminders.
+Create commands to modify or delete existing events.
+Configure the background class so that it can work with all the events and reminders by setting them off at the right time.
