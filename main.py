@@ -81,6 +81,57 @@ def select_suffix(day):
         return "th"
 
 
+# Prototype for shutting down
+def shutdown():
+    pass
+
+
+def add_item(reminder: Events.Reminder = None, event: Events.Event = None):  # Adds an item to a dynamic array
+    # Detect which case we are working with, this function is convenient because it provides the ability to add other
+    # types of events and their lists
+    if reminder is None and event is None:
+        return False
+    elif reminder is None:
+        item = event
+        working_list = events
+    elif event is None:
+        item = reminder
+        working_list = reminders
+    else:
+        return False
+
+    # Algorithm to add item to the first blank element or append it to the end
+    blank_found = False
+    for i in range(len(working_list)):
+        if working_list[i] == 0:
+            item.index = i
+            working_list[i] = item.index
+            blank_found = True
+            break
+
+    if not blank_found:
+        item.index = len(working_list)
+        working_list.append(item)
+
+
+def remove_item(reminder: Events.Reminder = None, event: Events.Event = None):  # Removes an item from a dynamic array
+    if reminder is None and event is None:
+        return False
+    elif reminder is None:
+        item = event
+        working_list = event
+    elif event is None:
+        item = reminder
+        working_list = reminders
+    else:
+        return False
+
+    if item.index == len(working_list) - 1:
+        working_list.pop(item.index)
+    else:
+        working_list[item.index] = 0
+
+
 # This is the core concept of the bot receiving messages. However, this way discord does it is actually outdated
 # according to the asyncio docs (LMAO)
 
