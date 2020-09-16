@@ -8,4 +8,4 @@ Create identifiers for all reminders and events which the user can use to access
 Decide how reminders associated with a certain event will be stored and implement this.
 Create commands to modify or delete existing reminders.
 Create commands to modify or delete existing events.
-Configure the background class so that it can work with all the events and reminders by setting them off at the right time.
+Configure the background function so that it can work with all the events and reminders by setting them off at the right time.
