@@ -1,3 +1,79 @@
+def string_to_duration(st):  # Method to convert string of format 20:30:30 or 30:30 or 30s or 1h2m30s into a duration
+    st = st.lower()
+    time_split = st.find(':')
+    timer = 0
+    if time_split == -1:
+        h_i = st.find("h")
+        m_i = st.find("m")
+        s_i = st.find("s")
+
+        if h_i != -1:
+            hour = st[0:h_i]
+            if m_i != -1:
+                minute = st[h_i + 1:m_i]
+                if s_i != -1:
+                    second = st[m_i + 1:s_i]
+                else:
+                    second = 0
+            else:
+                minute = 0
+                if s_i != -1:
+                    second = st[h_i + 1:s_i]
+                else:
+                    second = 0
+        elif m_i != -1:
+            hour = 0
+            minute = st[0:m_i]
+            if s_i != -1:
+                second = st[m_i + 1:s_i]
+            else:
+                second = 0
+        else:
+            hour = 0
+            minute = 0
+            if s_i != -1:
+                second = st[0:s_i]
+            else:
+                second = 0
+        try:
+            hour = int(hour)
+            minute = int(minute)
+            second = int(second)
+        except ValueError:
+            timer = -1
+    else:
+        quantity = st.count(":")
+        if quantity == 1:
+            second = 0
+            hour = st[0:time_split]
+            minute = st[time_split + 1:]
+        elif quantity == 2:
+            time_split_2 = st.find(":", time_split + 1)
+            hour = st[0:time_split]
+            minute = st[time_split + 1:time_split_2]
+            second = st[time_split_2 + 1:]
+        else:
+            hour = 0
+            minute = 0
+            second = 0
+
+        try:
+            hour = int(hour)
+            minute = int(minute)
+            second = int(second)
+        except ValueError:
+            timer = -1
+
+    if timer == -1:
+        pass
+    else:
+        timer = (hour * 3600) + (minute * 60) + second
+
+    if timer == 0:
+        timer = -1
+    return timer
+
+
 class Reminder:
     # This is the reminder class and it represents a simple reminder (1 message)
     def __init__(self, clock, text, index, to_ping=None):  # We should decide if we need any other variables

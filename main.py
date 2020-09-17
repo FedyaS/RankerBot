@@ -214,42 +214,62 @@ async def on_message(message):  # This is the case the bot receives a message
             # For the following part we could use regex since you have some knowledge with that xD
             ms = message.content  # String of the whole command message
             args = ms.split()  # The message split by white space
+            success = False
+            reply = ""
+            arg_error_reply = "Your !remind command did not provide enough arguments or the right arguments"
 
             if len(args) < 5:  # 5 is pretty much the min amount of words in the command
-                pass  # This should actually be the bot replying- saying the command is missing stuff / unreadable
+                reply = arg_error_reply  # All we do is set the reply and the bot will send it at the end
             elif 'TO' not in args:  # No TO keyword
-                pass  # Once again bot should reply saying TO is missing
+                reply = arg_error_reply
             elif 'AT' not in args or 'IN' not in args:
-                pass  # Once again bot should reply saying something is missing
-
-            elif 'AT' == args[1]:  # Case where AT is the second word (!remind AT)
-
-                # Long code below because I want to process times provided both as 7 or 7:30 or 7 30
-                # Should we process seconds for this? I don't think so as it would be an optional argument and would
-                # make life difficult. Also, no pm/am bs, just use military time.
-                time_split = args[2].find(':')
-                if time_split is -1:
-                    try:
-                        hour = int(args[2])  # Always use try for this kind of bs so if it fails our bot doesn't crash
-                        minute = 0
-                    except ValueError:
-                        hour = -1
-                        minute = -1
-                else:
-                    try:
-                        hour = int(args[2][0:time_split])
-                    except ValueError:
-                        hour = -1
-                    try:
-                        minute = int(args[2][time_split:])
-                    except IndexError:
-                        minute = 0
-
-            elif 'IN' == args[1]:  # Case where IN is the second word (!remind IN)
-                pass
+                reply = arg_error_reply
+            elif args[1] != 'AT' and args[1] != 'IN':
+                reply = arg_error_reply
+            elif 'TO' not in args:
+                reply = arg_error_reply
 
             else:
-                pass  # Once again bot should reply saying something is missing
+                clock = 0
+                timer = 0
+                if 'AT' == args[1]:  # Case where AT is the second word (!remind AT)
+
+                    # Long code below because I want to process times provided both as 7 or 7:30 or 7 30
+                    # Should we process seconds for this? I don't think so as it would be an optional argument and would
+                    # make life difficult. Also, no pm/am bs, just use military time.
+                    time_split = args[2].find(':')
+                    if time_split is -1:
+                        try:
+                            # Always use try for this kind of bs so if it fails our bot doesn't crash
+                            hour = int(args[2])
+                            try:
+                                minute = int(args[3])
+                            except ValueError:
+                                minute = 0
+                            clock = datetime.time(hour, minute, 00)
+                        except ValueError:
+                            hour = -1
+                            minute = -1
+                            clock = -1
+
+                    else:
+                        try:
+                            hour = int(args[2][0:time_split])
+                            try:
+                                minute = int(args[2][time_split:])
+                            except IndexError:
+                                minute = 0
+                            try:
+                                clock = datetime.time(hour, minute, 00)
+                            except ValueError:
+                                clock = -1
+                        except ValueError:
+                            hour = -1
+                            minute = -1
+                            clock = -1
+
+                elif 'IN' == args[1]:  # Case where IN is the second word (!remind IN)
+                    timer = Events.string_to_duration(args[2])
 
 
 @client.event
