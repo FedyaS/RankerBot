@@ -6,6 +6,7 @@ import calendar
 import time
 from discord.ext import tasks
 import Events
+import Methods
 # discord is the main import to know, as well as discord.ext
 
 # These 3 lines open the "secure" data file with the bot token and should not be shared, not really using this file for
@@ -66,70 +67,9 @@ events = []
 next_event_indices = []
 
 
-# Simple method to select the suffix depending on the date (1st vs 2nd vs 3rd vs 4th and so on)
-def select_suffix(day):
-    st = [1, 21, 31]
-    nd = [2, 22]
-    rd = [3, 23]
-    if day in st:
-        return "st"
-    elif day in nd:
-        return "nd"
-    elif day in rd:
-        return "rd"
-    else:
-        return "th"
-
-
 # Prototype for shutting down
 def shutdown():
     pass
-
-
-def add_item(reminder: Events.Reminder = None, event: Events.Event = None):  # Adds an item to a dynamic array
-    # Detect which case we are working with, this function is convenient because it provides the ability to add other
-    # types of events and their lists
-    if reminder is None and event is None:
-        return False
-    elif reminder is None:
-        item = event
-        working_list = events
-    elif event is None:
-        item = reminder
-        working_list = reminders
-    else:
-        return False
-
-    # Algorithm to add item to the first blank element or append it to the end
-    blank_found = False
-    for i in range(len(working_list)):
-        if working_list[i] == 0:
-            item.index = i
-            working_list[i] = item.index
-            blank_found = True
-            break
-
-    if not blank_found:
-        item.index = len(working_list)
-        working_list.append(item)
-
-
-def remove_item(reminder: Events.Reminder = None, event: Events.Event = None):  # Removes an item from a dynamic array
-    if reminder is None and event is None:
-        return False
-    elif reminder is None:
-        item = event
-        working_list = event
-    elif event is None:
-        item = reminder
-        working_list = reminders
-    else:
-        return False
-
-    if item.index == len(working_list) - 1:
-        working_list.pop(item.index)
-    else:
-        working_list[item.index] = 0
 
 
 # This is the core concept of the bot receiving messages. However, this way discord does it is actually outdated
@@ -230,46 +170,13 @@ async def on_message(message):  # This is the case the bot receives a message
                 reply = arg_error_reply
 
             else:
-                clock = 0
-                timer = 0
+                clock = -1
+                timer = -1
                 if 'AT' == args[1]:  # Case where AT is the second word (!remind AT)
-
-                    # Long code below because I want to process times provided both as 7 or 7:30 or 7 30
-                    # Should we process seconds for this? I don't think so as it would be an optional argument and would
-                    # make life difficult. Also, no pm/am bs, just use military time.
-                    time_split = args[2].find(':')
-                    if time_split is -1:
-                        try:
-                            # Always use try for this kind of bs so if it fails our bot doesn't crash
-                            hour = int(args[2])
-                            try:
-                                minute = int(args[3])
-                            except ValueError:
-                                minute = 0
-                            clock = datetime.time(hour, minute, 00)
-                        except ValueError:
-                            hour = -1
-                            minute = -1
-                            clock = -1
-
-                    else:
-                        try:
-                            hour = int(args[2][0:time_split])
-                            try:
-                                minute = int(args[2][time_split:])
-                            except IndexError:
-                                minute = 0
-                            try:
-                                clock = datetime.time(hour, minute, 00)
-                            except ValueError:
-                                clock = -1
-                        except ValueError:
-                            hour = -1
-                            minute = -1
-                            clock = -1
+                    clock = Methods.string_to_time(args[2], args[3])
 
                 elif 'IN' == args[1]:  # Case where IN is the second word (!remind IN)
-                    timer = Events.string_to_duration(args[2])
+                    timer = Methods.string_to_duration(args[2])
 
 
 @client.event
@@ -297,7 +204,7 @@ async def time_monitor():
             my_date = datetime.date.today()
             month_day = my_date.day
 
-            suffix = select_suffix(month_day)
+            suffix = Methods.select_suffix(month_day)
             if my_date.isoweekday() >= 6:  # Case where it is the weekend
                 pass
             else:
