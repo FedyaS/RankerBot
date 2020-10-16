@@ -15,15 +15,41 @@ dotenv.load_dotenv('Data.env')
 token = os.getenv('DISCORD_TOKEN')
 GUILD = os.getenv('DISCORD_GUILD')
 
+
+# I was thinking of making this the method to store all reminder and event objects. We would have a list for each and
+# keep track of the free index. Once an object is no longer useful, it can be removed from the list and we mark that as
+# a free index, available for use. This seems a bit shaky tho, so do you know any better methods?
+reminders = []
+next_reminder_indices = []
+events = []
+next_event_indices = []
+
+
 # This opens a text file which I have been using to store the message id of the previous bot invitation (in case it
 # crashes or needs to be restarted). Ultimately, this is a bad approach as txt sucks and we will probably need to use
 # json to store all the events and reminders we will be working with.
 DataFile = open("Data.txt", 'a+')
 DataFile.seek(0)
+ReminderFile = open("Reminder.txt", "a+")
+ReminderFile.seek(0)
+reminder_info = ReminderFile.read()
+reminder_info = reminder_info.split("...")
+
+
 perma_id = int(DataFile.read())  # This is the message id it gets from the data file
 print(perma_id)
 
-main_channel = 755138182701514903  # This is the id of the channel it sends announcements in
+print(reminder_info)
+if reminder_info[0] is not "":
+    clock = Methods.string_to_time(reminder_info[0][0:5], "")
+    reminder = Events.Reminder(clock, reminder_info[1], int(reminder_info[2]), int(reminder_info[3]))
+    print(reminder_info[0])
+    Methods.add_item(reminders, reminder=reminder)
+    perma_id = reminder.message_id
+
+print(reminders)
+
+main_channel = 761716446740086836  # This is the id of the channel it sends announcements in
 
 client = discord.Client(max_messages=1000)  # This is the discord client (bot itself) use client.something to do stuff
 # It is also possible to use the discord class Bot (instead of Client), but I believe this has some limitations, while
@@ -58,13 +84,7 @@ basic_message = "Reminder: There is a virtual lunch today from 11-12"  # The bas
 no_emoji = "👎"
 yes_emoji = "👍"
 
-# I was thinking of making this the method to store all reminder and event objects. We would have a list for each and
-# keep track of the free index. Once an object is no longer useful, it can be removed from the list and we mark that as
-# a free index, available for use. This seems a bit shaky tho, so do you know any better methods?
-reminders = []
-next_reminder_indices = []
-events = []
-next_event_indices = []
+
 
 
 # Prototype for shutting down
@@ -89,9 +109,13 @@ async def on_ready():  # This is the case where the bot says it is "ready"
 
 @client.event
 async def on_message(message):  # This is the case the bot receives a message
+    global perma_id
+    if message.author.id != 400040608489799680 and message.author.id != 329362607440134144:
+        print("Not Fedya")
+        pass
 
-    if message.content[0] == '!':  # Pretty much our command prefix.
-
+    elif message.content[0] == '!':  # Pretty much our command prefix.
+        print("Received")
         if message.content == '!!':  # The !! command
             response = 'Hello'
             await message.channel.send(response)  # Notice that you have to use await before function calls for stuff
@@ -122,7 +146,7 @@ async def on_message(message):  # This is the case the bot receives a message
                     # by the Discord api. It basically gets a list of all the users who reacted with said reaction
 
                     for attendee in attendees:  # Adding each reacted user
-                        all_names.append(attendee.display_name)
+                        all_names.append(attendee.name)
 
             # Formatting the reply for who will attend. This should be fixed up so the grammar is correct in case 0 or 1
             # people are attending. Maybe also make it look better somehow?
@@ -133,7 +157,31 @@ async def on_message(message):  # This is the case the bot receives a message
 
             await message.channel.send(reply)  # Once again, use await to send a reply
 
-        elif message.content[0:6] == '!remind':  # The remind command
+        elif message.content == "!ping":
+            all_names = []
+            temp_channel = client.get_channel(id=main_channel)
+            reaction_message = await temp_channel.fetch_message(id=perma_id)
+            reactions = reaction_message.reactions
+            for reaction in reactions:
+                if reaction.emoji == yes_emoji:
+                    attendees = await reaction.users().flatten()
+                    reply = "Reminder to " + reminders[0].text + ""
+                    for attendee in attendees:
+                        reply = attendee.mention + " " + reply
+                    reply = reply + "at " + str(reminders[0].clock)
+                    print(reply)
+                    await message.channel.send(reply)
+            print(reminders)
+
+        elif message.content == "!clear":
+            reminders.clear()
+            print(reminders)
+
+        elif message.content == "!show":
+            print(reminders)
+
+        elif message.content[0:7] == '!remind':  # The remind command
+            print("reminder")
             # This command would be a way for users to set a simple reminder for themselves / others (vs an Event which
             # would also have attendance)
 
@@ -154,29 +202,59 @@ async def on_message(message):  # This is the case the bot receives a message
             # For the following part we could use regex since you have some knowledge with that xD
             ms = message.content  # String of the whole command message
             args = ms.split()  # The message split by white space
+            print(args)
             success = False
             reply = ""
             arg_error_reply = "Your !remind command did not provide enough arguments or the right arguments"
+            clock = -1
+            timer = -1
 
             if len(args) < 5:  # 5 is pretty much the min amount of words in the command
                 reply = arg_error_reply  # All we do is set the reply and the bot will send it at the end
             elif 'TO' not in args:  # No TO keyword
                 reply = arg_error_reply
-            elif 'AT' not in args or 'IN' not in args:
+            elif 'AT' not in args and 'IN' not in args:
                 reply = arg_error_reply
             elif args[1] != 'AT' and args[1] != 'IN':
                 reply = arg_error_reply
             elif 'TO' not in args:
                 reply = arg_error_reply
 
+            if reply == arg_error_reply:
+                await message.channel.send(arg_error_reply)
             else:
-                clock = -1
-                timer = -1
                 if 'AT' == args[1]:  # Case where AT is the second word (!remind AT)
                     clock = Methods.string_to_time(args[2], args[3])
+                    print(clock)
 
                 elif 'IN' == args[1]:  # Case where IN is the second word (!remind IN)
                     timer = Methods.string_to_duration(args[2])
+
+            if (clock != -1 or timer != -1) and reply != arg_error_reply:
+                print("Successful remind command")
+                text = Methods.remind_args_to_text(args)
+                if not text:
+                    print("No text")
+                else:
+                    channel = client.get_channel(id=main_channel)
+                    reply = "Who wants to " + text + "at " + str(clock) + "?"
+                    message = await channel.send(reply)
+                    await message.add_reaction(yes_emoji)
+                    await message.add_reaction(no_emoji)
+                    perma_id = message.id
+                    if timer != -1:
+                        reminder = Events.Reminder(timer, text, -1, perma_id)
+                    else:
+                        reminder = Events.Reminder(clock, text, -1, perma_id)
+
+                    Methods.add_item(reminders, reminder=reminder)
+                    ReminderFile.truncate(0)
+                    to_write = [reminder.clock, reminder.text, reminder.index, reminder.message_id]
+                    for w in to_write:
+                        ReminderFile.write(str(w))
+                        ReminderFile.write("...")
+                        ReminderFile.flush()
+                        os.fsync(ReminderFile.fileno())
 
 
 @client.event

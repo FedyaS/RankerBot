@@ -38,7 +38,7 @@ def add_item(array, reminder: Events.Reminder = None, event: Events.Event = None
             break
 
     if not blank_found:
-        item.index = len(array)
+        item.index = len(array) - 1
         array.append(item)
 
 
@@ -136,7 +136,11 @@ def string_to_duration(st):  # Method to convert string of format 20:30:30 or 30
 
 
 def string_to_time(st1, st2):
-    time_split = st1[2].find(':')
+    try:
+        time_split = st1.find(':')
+    except IndexError:
+        time_split = -1
+
     if time_split is -1:
         try:
             # Always use try for this kind of bs so if it fails our bot doesn't crash
@@ -155,7 +159,7 @@ def string_to_time(st1, st2):
         try:
             hour = int(st1[0:time_split])
             try:
-                minute = int(st1[time_split:])
+                minute = int(st1[time_split+1:])
             except IndexError:
                 minute = 0
             try:
@@ -169,7 +173,26 @@ def string_to_time(st1, st2):
 
     return clock
 
+
+def remind_args_to_text(args):
+    read_key_text = False
+    text = ""
+    for arg in args:
+        if "@" in arg:
+            read_key_text = False
+
+        if read_key_text:
+            text = text + arg + " "
+
+        if arg == "TO":
+            read_key_text = True
+
+    if text != "":
+        return text
+    else:
+        return False
+
 # while True:
-#     my = input("\n")
-#     my = my.split()
-#     print(string_to_time(input("\n")))
+#     k = input("\n")
+#     k = k.split()
+#

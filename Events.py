@@ -1,10 +1,12 @@
 class Reminder:
     # This is the reminder class and it represents a simple reminder (1 message)
-    def __init__(self, clock, text, index, to_ping=None):  # We should decide if we need any other variables
+    def __init__(self, clock, text, index, message_id, to_ping=None):  # We should decide if we need any other variables
         # Need to make it somehow so we can have both reminders that work as timers (go off in a set amount of time)
         # and as scheduled reminders (go off when the clock hits a certain time)
         self.time_till = clock
+        self.clock = clock
         self.text = text
+        self.message_id = message_id
         if to_ping is None:
             self.to_ping = []
         else:
@@ -23,9 +25,12 @@ class Reminder:
         else:
             return False
 
-    def progress(self, time):  # Progressing the reminder, maybe should update self.done as well if time has come
-        self.run_time(time)
+    def progress_timer(self, time_passed):  # Progressing the reminder, maybe should update self.done as well if time has come
+        self.run_time(time_passed)
         return self.check_if_time()
+
+    def progress_clock(self, time):
+        pass
 
 
 class Event:
